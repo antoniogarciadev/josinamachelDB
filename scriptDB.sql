@@ -47,7 +47,7 @@ CREATE TABLE `users` (
     `surname` VARCHAR(100) NOT NULL, -- surname do Usuário
     `email` VARCHAR(100) NOT NULL UNIQUE, -- Email do Usuário usado para login
     `phone` VARCHAR(20) NOT NULL, -- Número de phone para contato
-    `brith_date` DATE NOT NULL, -- Data de nascimento
+    `birth_date` DATE NOT NULL, -- Data de nascimento
     `gender` ENUM('m', 'f') NOT NULL, -- Gênero do usuário (m = masculino ou f = femenino)
     `address` TEXT NOT NULL DEFAULT '', -- Endereço residencial
     `password` VARCHAR(255) NOT NULL, -- Senha criptografada
@@ -58,7 +58,7 @@ CREATE TABLE `users` (
     PRIMARY KEY(`uid`)
 )CHAR SET utf8;
 
-INSERT INTO `users` ( `name`, `surname`, `email`, `phone`, `brith_date`, `gender`, `address`, `password`, `profile`)
+INSERT INTO `users` ( `name`, `surname`, `email`, `phone`, `birth_date`, `gender`, `address`, `password`, `profile`)
 VALUES
 ('António', 'Garcia', 'antonio.garcia@gmail.com', '+244928740538', '2006-06-15', 'm', DEFAULT, '$2y$10$OtIVTQA1bNVHZ.wcrhkM8O/Bx6skQNWYeCcX/o76Sz3wBSN4wEYca', 'admin'), 
 ('Feliciana', 'David', 'feliciana.david@gmail.com', '+244928740538', '2006-06-15', 'f', DEFAULT, '$2y$10$NQem3qD7nQv6Xh/c3zBQteX594SkCHjZi76u2Z65mjnXYbtYXyWLu', 'admin'), 		
@@ -72,26 +72,26 @@ VALUES
 ('Beatriz', 'Almeida', 'beatriz.almeida@gmail.com', '+244928740545', '1997-04-26', 'f', 'Gamek-Luanda', '$2y$10$YXlvbhaoQwe2WPwIJvtJFudsv/7rxK0CJgb88XzuYAwn8msN6aow.', 'patient');
 
 -- Tabela de funcionários para o hospital, para armazenar as informações dos funcionários, incluindo o cargo e a associação com o usuário correspondente na tabela de usuários. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
-CREATE TABLE `funcionario` (
+CREATE TABLE `employee` (
     `id` INT PRIMARY KEY,
     `cargo` VARCHAR(100) NOT NULL,
     FOREIGN KEY (`id`) REFERENCES `users`(`uid`)
 );
 
-INSERT INTO `funcionario` (`id`, `cargo`)
+INSERT INTO `employee` (`id`, `cargo`)
 VALUES 	( 3, 'recepcionista'),
 		( 4, 'emfermeiro');
         
   
 -- Tabela de médicos para o hospital, para armazenar as informações dos médicos, incluindo a especialidade e a associação com o usuário correspondente na tabela de usuários. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
-CREATE TABLE `medico` (
+CREATE TABLE `doctor` (
     `id` INT PRIMARY KEY, -- Referência ao usuário correspondente
     `id_specialty` INT, -- Especialidade médica (fk de especialidade)
     FOREIGN KEY(`id`) REFERENCES `users`(`uid`),
     FOREIGN KEY(`id_specialty`) REFERENCES `specialty`(`id`)
 )CHAR SET utf8;
 
-INSERT INTO `medico` (`id`, `id_specialty`)
+INSERT INTO `doctor` (`id`, `id_specialty`)
 VALUES 	(5, 1),
 		(6, 4);      
 	
@@ -99,69 +99,142 @@ VALUES 	(5, 1),
 -- Tabela de pacientes para o hospital, para armazenar as informações dos pacientes, incluindo o tipo sanguíneo, alergias e a associação com o usuário correspondente na tabela de usuários. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
 CREATE TABLE `patient` (
     `id` INT AUTO_INCREMENT, -- Identificador único do paciente
-    `uid` INT NULL UNIQUE , -- Referência ao usuário (pode ser nulo)
+    `uid` INT NULL UNIQUE NULL, -- Referência ao usuário (pode ser nulo)
     `id_blood_type` INT, -- Tipo sanguíneo (fk de blood_type)
     `full_name` VARCHAR(100) NOT NULL, -- Nome completo do paciente
     `phone` VARCHAR(20) NOT NULL, -- phone de contato
     `gender` ENUM('m', 'f') NOT NULL, -- Gênero do paciente
     `bi_passaporte` VARCHAR(14) NOT NULL UNIQUE, -- BI ou passaporte
-    `brith_date` DATE NOT NULL, -- Data de nascimento
+    `birth_date` DATE NOT NULL, -- Data de nascimento
+    `death_date` DATE NULL, -- Data de nascimento
     `alergias` TEXT NULL DEFAULT 'Nenhuma', -- Alergias conhecidas
     `address` TEXT NOT NULL DEFAULT '', -- Endereço residencial
+    `status` ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    `register_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY(`id`),
     FOREIGN KEY(`uid`) REFERENCES `users`(`uid`) ON DELETE SET NULL,
     FOREIGN KEY(`id_blood_type`) REFERENCES `blood_type`(`id`)
 )CHAR SET utf8;
 
 INSERT INTO `patient` 
-(`uid`, `id_blood_type`, `full_name`, `phone`, `gender`, `bi_passaporte`, `brith_date`, `alergias`, `address`)
+(`uid`, `id_blood_type`, `full_name`, `phone`, `gender`, `bi_passaporte`, `birth_date`, `alergias`, `address`, `status`)
 VALUES
-(7, 2, 'Anselmo Vidal', '+244900000001', 'm', 'bi00001', '2000-02-10', DEFAULT, 'Luanda'),
-( 8, 8, 'Maria Silva', '+244900000002', 'f', 'bi00002', '1995-06-15', 'Penicilina', 'Benguela'),
-(NULL, 4, 'Luís Gomes', '+244928740538', 'm', 'bi00003', '1980-07-30', DEFAULT, 'Luanda-Angola'),
-(NULL, 4, 'Inês Martins', '+244928740538', 'f', 'bi00004', '1994-10-15', 'Poeira', 'Gamek-Luanda'),
-(NULL, 4, 'Rui Lopes', '+244928740538', 'm', 'bi00005', '2000-04-06', 'Lactose', 'Luanda-Angola'),
-(NULL, 4, 'Catarina Sousa', '+244928740538', 'f', 'bi00006', '1995-10-20', DEFAULT, 'Gamek-Luanda');
+(7, 2, 'Pedro Costa', '+244900000001', 'm', 'bi00001', '2000-02-10', DEFAULT, 'Luanda', DEFAULT),
+( 8, 8, 'Sofia Rodrigues', '+244900000002', 'f', 'bi00002', '1995-06-15', 'Penicilina', 'Benguela', DEFAULT),
+(NULL, 4, 'Luís Gomes', '+244928740538', 'm', 'bi00003', '1980-07-30', DEFAULT, 'Luanda-Angola', 'inactive'),
+(NULL, 4, 'Inês Martins', '+244928740538', 'f', 'bi00004', '1994-10-15', 'Poeira', 'Gamek-Luanda', DEFAULT),
+(NULL, 4, 'Rui Lopes', '+244928740538', 'm', 'bi00005', '2000-04-06', 'Lactose', 'Luanda-Angola', DEFAULT),
+(NULL, 4, 'Catarina Sousa', '+244928740538', 'f', 'bi00006', '1995-10-20', DEFAULT, 'Gamek-Luanda', DEFAULT),
+(9, 4, 'Miguel Ferreira', '+244928740538', 'f', 'bi000011', '1995-10-20', DEFAULT, 'Gamek-Luanda', DEFAULT);
 
 
 -- Tabela de triagem para o hospital, para armazenar as informações das triagens realizadas pelos funcionários, incluindo o peso, a temperatura e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
+-- 1. Recriação da tabela com as colunas de suporte à vida
+DROP TABLE IF EXISTS `triagem`;
 CREATE TABLE `triagem` (
-    `id` INT AUTO_INCREMENT, -- Identificador da triagem
-    `id_funcionario` INT, -- Funcionário que realizou a triagem
-    `id_patient` INT, -- Paciente triado
-    `peso` DOUBLE NOT NULL, -- Peso em kg
-    `temperatura` DOUBLE NOT NULL, -- Temperatura corporal em °C
-    `sintomas` TEXT, -- Observações adicionais da triagem
-    `data` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Data e hora da triagem
+    `id` INT AUTO_INCREMENT,
+    `id_employee` INT, 
+    `id_patient` INT, 
+    `id_specialty` INT, -- Nova Coluna
+    `peso` DOUBLE NULL, 
+    `pressao` VARCHAR(20) NULL, 
+    `temperatura` DOUBLE NULL, 
+    `freq_cardiaca` INT NULL,
+    `clinical_risk` ENUM('Vermelho(Emergência)', 'Laranja(Muito Urgente)', 'Amarelo(Urgente)', 'Verde(Pouco Urgente)', 'Azul(Não Urgente)') NULL,
+    `queixa_principal` TEXT NULL,
+    `status` ENUM('pendente', 'em_espera', 'concluida') NOT NULL DEFAULT 'em_espera',
+    `data` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
     PRIMARY KEY(`id`),
-    FOREIGN KEY(`id_funcionario`) REFERENCES `funcionario`(`id`),
-    FOREIGN KEY(`id_patient`) REFERENCES `patient`(`id`)
-)CHAR SET utf8;
+    FOREIGN KEY(`id_employee`) REFERENCES `employee`(`id`),
+    FOREIGN KEY(`id_patient`) REFERENCES `patient`(`id`),
+    FOREIGN KEY(`id_specialty`) REFERENCES `specialty`(`id`) -- Chave Estrangeira
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `triagem`
-(`id_funcionario`, `id_patient`, `peso`, `temperatura`, `sintomas`, `data`)
-VALUES (3, 1, 70.5, 36.5, 'Normal', NOW()),
-	   (4, 2, 65.2, 37.8, 'Febre leve', NOW()),
-       (3, 3, 80.2, 38.8, 'Dor de cabeça', NOW());
+-- 3. Inserts Atualizados (Incluindo a Especialidade)
+INSERT INTO `triagem` 
+(`id_employee`, `id_patient`, `id_specialty`, `peso`, `pressao`, `temperatura`, `freq_cardiaca`, `clinical_risk`, `queixa_principal`)
+VALUES 
+-- Crítico (Cardiologia)
+(4, 4, 5, 75.0, '8/5', 35.5, 135, 'Vermelho(Emergência)', 'Paciente inconsciente, possível paragem cardiorrespiratória.'),
+-- Muito Urgente (Medicina Geral)
+(4, 2, 1, 65.2, '16/10', 38.8, 105, 'Laranja(Muito Urgente)', 'Dor torácica intensa e dificuldade respiratória.'),
+-- Urgente (Pediatria)
+(3, 5, 2, 82.0, '14/9', 39.0, 95, 'Amarelo(Urgente)', 'Febre alta e desidratação.'),
+-- Pouco Urgente (Ortopedia)
+(3, 1, 3, 70.0, '12/8', 36.6, 72, 'Verde(Pouco Urgente)', 'Entorse no tornozelo sem deformidade.'),
+-- Não Urgente (Medicina Geral)
+(3, 6, 1, 60.5, '11/7', 36.2, 80, 'Azul(Não Urgente)', 'Dores musculares leves há 3 dias.');
 
+-- 4. Query de Listagem Inteligente (Por Risco e agora mostrando a Especialidade)
+SELECT 
+    t.id,
+    p.full_name AS Paciente,
+    s.name AS Especialidade,
+    t.clinical_risk AS Risco,
+    t.queixa_principal AS Queixa,
+    t.data
+FROM triagem t
+JOIN patient p ON t.id_patient = p.id
+JOIN specialty s ON t.id_specialty = s.id
+ORDER BY FIELD(t.clinical_risk, 'Vermelho(Emergência)', 'Laranja(Muito Urgente)', 'Amarelo(Urgente)', 'Verde(Pouco Urgente)', 'Azul(Não Urgente)'), t.data ASC;
+
+CREATE TABLE `emergencia` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `id_triagem` INT NOT NULL,
+    `id_doctor` INT NULL, -- Pode ser NULL até um médico assumir o caso
+    `hora_entrada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `hora_primeiro_atendimento` DATETIME NULL,
+    `status` ENUM('aguardando', 'em_atendimento', 'em_observacao', 'transferido', 'alta', 'obito') DEFAULT 'aguardando',
+    `conduta_imediata` TEXT, -- Ex: "Aplicar oxigênio", "Encaminhar para choque"
+    FOREIGN KEY(`id_triagem`) REFERENCES `triagem`(`id`),
+    FOREIGN KEY(`id_doctor`) REFERENCES `doctor`(`id`)
+) CHAR SET utf8;
+
+-- 1. Paciente em Estado Crítico (Vermelho) - Já com conduta imediata
+-- Usamos o id_triagem 4 (que foi o nosso caso de Parada Cardiorrespiratória)
+INSERT INTO `emergencia` 
+(`id_triagem`, `id_doctor`, `hora_entrada`, `status`, `conduta_imediata`)
+VALUES 
+(4, 5, NOW(), 'em_atendimento', 'Iniciar manobras de RCP e administrar Epinefrina. Preparar desfibrilador.');
+
+-- 2. Paciente Muito Urgente (Laranja) - Aguardando médico. Usamos o id_triagem 3 (Suspeita de AVC)
+INSERT INTO `emergencia`(`id_triagem`, `id_doctor`, `hora_entrada`, `status`, `conduta_imediata`)
+VALUES 
+(3, NULL, NOW(), 'aguardando', 'Monitorização contínua de sinais vitais e acesso venoso periférico.');
+
+-- 3. Paciente Urgente (Amarelo) - Em observaçã, Usamos o id_triagem 2 (Febre e dor abdominal)
+INSERT INTO `emergencia` (`id_triagem`, `id_doctor`, `hora_entrada`, `hora_primeiro_atendimento`, `status`, `conduta_imediata`)
+VALUES (2, 6, NOW(), NOW(), 'em_observacao', 'Administração de analgésicos e aguardando resultados de exames laboratoriais.');
+
+SELECT 
+    p.full_name AS Paciente,
+    t.clinical_risk AS Prioridade,
+    e.status AS Situacao,
+    e.conduta_imediata AS Conduta,
+    u.name AS Medico_Responsavel
+FROM emergencia e
+JOIN triagem t ON e.id_triagem = t.id
+JOIN patient p ON t.id_patient = p.id
+LEFT JOIN users u ON e.id_doctor = u.uid
+ORDER BY FIELD(t.clinical_risk, 'Vermelho(Emergência)', 'Laranja(Muito Urgente)', 'Amarelo(Urgente)');
 -- Tabela de consultas para o hospital, para armazenar as informações das consultas realizadas pelos médicos, incluindo a data, a hora marcada, o status e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
 CREATE TABLE `consulta` (
     `id` INT AUTO_INCREMENT, -- Identificador da consulta
     `id_triagem` INT NOT NULL, -- Triagem associada à consulta
-    `id_medico` INT NOT NULL, -- Médico responsável pela consulta
+    `id_doctor` INT NOT NULL, -- Médico responsável pela consulta
     `data_consulta` DATE NOT NULL, -- Data agendada da consulta
     `hora_marcada` TIME NOT NULL, -- Hora marcada para a consulta
     `status` ENUM('marcada', 'em_andamento', 'finalizada', 'cancelada') NOT NULL DEFAULT 'marcada', -- Situação da consulta
     `observacoes` TEXT DEFAULT '', -- Observações feitas pelo médico ou funcionário
     PRIMARY KEY(`id`),
     FOREIGN KEY(`id_triagem`) REFERENCES `triagem`(`id`),
-    FOREIGN KEY(`id_medico`) REFERENCES `medico`(`id`)
+    FOREIGN KEY(`id_doctor`) REFERENCES `doctor`(`id`)
 )CHAR SET utf8;
 
 INSERT INTO `consulta`
-(`id_triagem`, `id_medico`, `data_consulta`, `hora_marcada`, `status`, `observacoes`)
+(`id_triagem`, `id_doctor`, `data_consulta`, `hora_marcada`, `status`, `observacoes`)
 VALUES
-(1, 5, '2026-03-05', '09:00:00', 'marcada', 'Primeira consulta'),
+(1, 5, '2026-03-05', '09:00:00', 'finalizada', 'Primeira consulta'),
 (2, 6, '2026-03-05', '10:00:00', 'finalizada', 'Paciente medicado'),
 (3, 5, '2026-07-05', '12:00:00', 'marcada', DEFAULT);
 
@@ -208,44 +281,24 @@ VALUES
 (2, 2, '2026-03-05 12:00:00', 'Sinais de infecção pulmonar');
 
 
--- Tabela de diagnósticos para o hospital, para armazenar as informações dos diagnósticos realizados pelos médicos, incluindo a descrição do diagnóstico, as observações e a data do diagnóstico. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
-CREATE TABLE `diagnostico` (
-    `id` INT AUTO_INCREMENT, -- Identificador único do diagnóstico
-    `id_consulta` INT, -- Consulta relacionada ao diagnóstico
-    `descricao` TEXT, -- Descrição do diagnóstico
-    `observacao` TEXT, -- Observações do médico
-    `data_diagnostico` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Data em que o diagnóstico foi registrado
-    PRIMARY KEY(`id`),
-    FOREIGN KEY(`id_consulta`) REFERENCES `consulta`(`id`)
-)CHAR SET utf8;
-
-INSERT INTO `diagnostico`
-(`id_consulta`, `descricao`, `observacao`, `data_diagnostico`)
-VALUES
-(1, 'Gripe', 'Caso leve', NOW()),
-(2, 'Infecção', 'Precisa antibiótico', NOW());
-
-
--- Tabela de receitas para o hospital, para armazenar as informações das receitas prescritas pelos médicos, incluindo os remédios, a dosagem, a frequência e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
+-- Tabela de receitas para o hospital, para armazenar as informações das receitas prescritas pelos médicos, incluindo	 os remédios, a dosagem, a frequência e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
 CREATE TABLE `receita` (
     `id` INT AUTO_INCREMENT, -- Identificador único da receita
-    `id_diagnostico` INT, -- Diagnóstico que gerou a receita
-    `id_medico` INT, -- Médico que emitiu a receita
+    `id_consulta` INT, -- Médico que emitiu a receita
     `data_receita` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Data da emissão da receita
-    `obsercacao` TEXT NOT NULL, -- Observações gerais (typo intencional conservado)
+    `observacao` TEXT NOT NULL, -- Observações gerais (typo intencional conservado)
     `remedios` TEXT NOT NULL, -- Medicamentos prescritos
     `dosagem` TEXT NOT NULL, -- Dosagem indicada
     `frequencia` TEXT NOT NULL, -- Frequência de uso dos remédios
     PRIMARY KEY(`id`),
-    FOREIGN KEY(`id_diagnostico`) REFERENCES `diagnostico`(`id`),
-    FOREIGN KEY(`id_medico`) REFERENCES `medico`(`id`)
+    FOREIGN KEY(`id_consulta`) REFERENCES `consulta`(`id`)
 )CHAR SET utf8;
 
 INSERT INTO `receita`
-(`id_diagnostico`, `id_medico`, `data_receita`, `obsercacao`, `remedios`, `dosagem`, `frequencia`)
+(`id_consulta`, `data_receita`, `observacao`, `remedios`, `dosagem`, `frequencia`)
 VALUES
-(1, 5, NOW(), 'Tomar por 5 dias', 'Paracetamol', '500mg', '8/8h'),
-(2, 6, NOW(), 'Tomar por 7 dias', 'Amoxicilina', '500mg', '12/12h');
+( 1, NOW(), 'Tomar por 5 dias', 'Paracetamol', '500mg', '8/8h'),
+( 2, NOW(), 'Tomar por 7 dias', 'Amoxicilina', '500mg', '12/12h');
 
 
 -- Tabela de prontuários para o hospital, para armazenar as informações dos prontuários dos pacientes, incluindo os sintomas, o diagnóstico, o tratamento e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
@@ -279,7 +332,7 @@ CREATE TABLE `room` (
 )CHAR SET utf8;
 
 INSERT INTO `room`
-(`id_specialty`, `piso`, `leitos`)
+ (`id_specialty`, `piso`, `leitos`)
 VALUES
 (1, 1, 4),
 (3, 2, 5),
@@ -292,11 +345,10 @@ CREATE TABLE `hospitalization` (
     `id` INT AUTO_INCREMENT, -- Identificador único do internamento
     `id_consulta` INT NOT NULL, -- Identificador da consulta que originou o internamento
     `id_room` INT NOT NULL, -- Quarto onde o paciente ficará
-	`estado` TEXT NOT NULL, -- Estado do internamento
+	`clinical_state` ENUM('Estável', 'Estável Grave', 'Instável', 'Gravíssimo') NOT NULL, -- Estado do internamento
     `data_entrada` DATE NOT NULL, -- Data de entrada no internamento
     `data_alta` DATE NULL, -- Data de saída do internamento (Pode ser NULL se ativo)
-    `tipo_alta` ENUM('Alta medica', 'Transferencia', 'Obito', 'Abandono') DEFAULT NULL, -- Tipo de alta
-    `evolucao` TEXT, -- Histórico de evolução clínica
+    `tipo_alta` ENUM('Alta hospitalar', 'Alta não hospitalar') DEFAULT NULL, -- Tipo de alta
     `observacao` TEXT, -- Observações do internamento
     PRIMARY KEY(`id`),
     FOREIGN KEY(`id_consulta`) REFERENCES `consulta`(`id`),
@@ -304,12 +356,12 @@ CREATE TABLE `hospitalization` (
 )CHAR SET utf8;
 
 INSERT INTO `hospitalization`
-(`id_consulta`, `id_room`, `estado`, `data_entrada`, `data_alta`, `tipo_alta`, `evolucao`, `observacao`)
+(`id_consulta`, `id_room`, `clinical_state`, `data_entrada`, `data_alta`, `tipo_alta`, `observacao`)
 VALUES
-(1, 1, 'Alta', '2026-03-05', '2026-03-08', 'Alta medica', 'Paciente apresentou melhoras progressivas nas primeiras 48h.', 'Sem observações'),
-(2, 2, 'Alta', '2026-03-06', '2026-03-09', 'Transferencia', 'Estabilizado para transferência.', 'Transferido para Hospital Geral');
+(1, 1, 'Estavel', '2026-03-05', '2026-03-08', 'Alta hospitalar', 'Paciente apresentou melhoras progressivas nas primeiras 48h.'),
+(2, 2, 'Estável Grave', '2026-03-06', '2026-03-09', 'Alta não hospitalar', 'Transferido para Hospital Geral');
 
 
-SELECT p.full_name AS patient, CONCAT(u.name,' ',u.surname) AS medico, c.data_consulta
+SELECT p.full_name AS patient, CONCAT(u.name,' ',u.surname) AS doctor, c.data_consulta
 FROM consulta c
-JOIN triagem t ON t.id = c.id_triagem JOIN patient p ON p.id = t.id_patient JOIN medico m ON m.id = c.id_medico JOIN users u ON u.uid = m.id;
+JOIN triagem t ON t.id = c.id_triagem JOIN patient p ON p.id = t.id_patient JOIN doctor m ON m.id = c.id_doctor JOIN users u ON u.uid = m.id;
