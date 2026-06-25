@@ -87,7 +87,7 @@ CREATE TABLE `employee` (
 
 INSERT INTO `employee` (`id`, `cargo`)
 VALUES 	( 3, 'recepcionista'),
-		( 4, 'emfermeiro');
+		( 4, 'enfermeiro');
         
   
 -- Tabela de médicos para o hospital, para armazenar as informações dos médicos, incluindo a especialidade e a associação com o usuário correspondente na tabela de usuários. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
