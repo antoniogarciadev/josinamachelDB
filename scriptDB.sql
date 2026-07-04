@@ -51,9 +51,9 @@ CREATE TABLE `users` (
     `phone` VARCHAR(20) NOT NULL, -- Número de phone para contato
     `birth_date` DATE NOT NULL, -- Data de nascimento
     `gender` ENUM('m', 'f') NOT NULL, -- Gênero do usuário (m = masculino ou f = femenino)
-    `has_disability` TINYINT(1) NOT NULL DEFAULT 0, -- Deficiência 0 = Não é / é deficiente
+    `has_disability` TINYINT(1) NOT NULL DEFAULT 0, -- Deficiência 0 = Não é / 1 = é deficiente
     `disability_type` VARCHAR(100) NOT NULL DEFAULT 'Nenhuma',
-    `address` TEXT NOT NULL DEFAULT '', -- Endereço residencial
+    `address` TEXT NOT NULL DEFAULT 'Desconhecido', -- Endereço residencial
     `provincia` TEXT NOT NULL DEFAULT 'Luanda', -- Endereço residencial
     `password` VARCHAR(255) NOT NULL, -- Senha criptografada
     `profile` ENUM('admin', 'doctor', 'employee', 'patient') NOT NULL DEFAULT 'patient', -- Perfil de acesso do usuário
@@ -123,9 +123,9 @@ CREATE TABLE `patient` (
     `birth_date` DATE NOT NULL, -- Data de nascimento
     `death_date` DATE NULL, -- Data de nascimento
     `alergias` TEXT NULL DEFAULT 'Nenhuma', -- Alergias conhecidas
-    `has_disability` TINYINT(1) NOT NULL DEFAULT 0,
-    `disability_type` VARCHAR(100) NULL,
-    `address` TEXT NOT NULL DEFAULT '', -- Endereço residencial
+    `has_disability` TINYINT(1) NOT NULL DEFAULT 0, -- Deficiência 0 = Não é / 1 = é deficiente
+    `disability_type` VARCHAR(100) NOT NULL DEFAULT 'Nenhuma', -- Tipo de deficiência
+    `address` TEXT NOT NULL DEFAULT 'Desconhecido', -- Endereço residencial
     `provincia` TEXT NOT NULL DEFAULT 'Luanda', -- Endereço residencial
     `register_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY(`id`),
@@ -141,20 +141,20 @@ VALUES
 (NULL, 8, 'Inês Martins', '000000000LA015', '+244928740538', 'f', DEFAULT, '1994-10-15', 'Poeira', 'Gamek', DEFAULT),
 (NULL, 6, 'Rui Lopes', '000000000LA016', '+244928740538', 'm', DEFAULT, '2000-04-06', 'Lactose', 'Rangel', DEFAULT),
 (NULL, 3, 'Catarina Sousa', '000000000LA017', '+244928740538', 'f', DEFAULT, '1995-10-20', DEFAULT, 'Catete', 'Icolo e Bengo'),
-(12, 1, 'Miguel Ferreira', '000000000LA018', '+244928740538', 'm', DEFAULT, '1995-10-20', DEFAULT, 'Praca nova', 'Bie');
+(12, 1, 'Miguel Ferreira', '000000000LA018', '+244928740538', 'm', DEFAULT, '1995-10-20', DEFAULT, DEFAULT, 'Bie');
 
 -- Pacientes com deficiência 
 INSERT INTO `patient` 
 (`uid`, `id_blood_type`, `full_name`, `bi_passport`, `phone`, `gender`, `status`, `birth_date`, `alergias` , `has_disability`, `disability_type`, `address`, `provincia`)
 VALUES
 (NULL, 3, 'Serafim Costa', '000000000LA019', '+244900000001', 'm', DEFAULT, '2000-12-12', DEFAULT, 1, 'Visual', 'Caquaco', DEFAULT),
-( NULL, 8, 'Lola Ramos', '000000000LA020', '+244900000002', 'f', DEFAULT, '1995-06-15', DEFAULT, 1, 'Física', 'Menogue', 'Malanje');
+( NULL, 8, 'Lola Ramos', '000000000LA020', '+244900000002', 'f', DEFAULT, '1995-06-15', DEFAULT, 1, 'Física', 'Cidade de Malanje', 'Malanje');
 
 -- Pacientes falecidos
 INSERT INTO `patient` 
 (`uid`, `id_blood_type`, `full_name`, `bi_passport`, `phone`, `gender`, `status`, `birth_date`, `death_date`,  `alergias`, `address`)
 VALUES
-(NULL, 4, 'Marcoa Ascensio', '000000000LA021', '+244928740538', 'm', 'inactive', '1980-07-30', '2021-03-20', DEFAULT, 'Camama'),
+(NULL, 4, 'Marcoa Ascensio', '000000000LA021', '+244928740538', 'm', 'inactive', '1980-07-30', '2021-03-20', DEFAULT, DEFAULT),
 (NULL, 5, 'Luís Gomes', '000000000LA022', '+244928740538', 'm', 'inactive', '1980-07-30', '2024-07-13', DEFAULT, 'Viana');
 
 -- Tabela de triagem para o hospital, para armazenar as informações das triagens realizadas pelos funcionários, incluindo o peso, a temperatura e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
