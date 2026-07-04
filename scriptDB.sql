@@ -11,8 +11,8 @@ CREATE TABLE `specialty` (
     `name` VARCHAR(100) NOT NULL UNIQUE, -- Nome da especialidade
     `descricao` TEXT DEFAULT 'Para pesquisar', -- Descrição da especialidade
     PRIMARY KEY(`id`)
-)  ENGINE=InnoDB DEFAULT CHARSET=utf8;
-p
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 INSERT INTO `specialty` (`name`, `descricao`)
 VALUES 	
 ('Acilo Facial', DEFAULT), ('Alergia e Imunologia', 'Alergia e Imunologia é a área especialisada que foca no diagnóstico e no tratamento de doenças alérgicas. Os profissionais trabalham com o sistema imune e com o diagnóstico e identificação das patologias e seus diferentes graus no organismo dos pacientes.'),
@@ -52,11 +52,13 @@ CREATE TABLE `users` (
     `birth_date` DATE NOT NULL, -- Data de nascimento
     `gender` ENUM('m', 'f') NOT NULL, -- Gênero do usuário (m = masculino ou f = femenino)
     `has_disability` TINYINT(1) NOT NULL DEFAULT 0, -- Deficiência 0 = Não é / é deficiente
-    `disability_type` VARCHAR(100) NULL,
+    `disability_type` VARCHAR(100) NOT NULL DEFAULT 'Nenhuma',
     `address` TEXT NOT NULL DEFAULT '', -- Endereço residencial
     `provincia` TEXT NOT NULL DEFAULT 'Luanda', -- Endereço residencial
     `password` VARCHAR(255) NOT NULL, -- Senha criptografada
     `profile` ENUM('admin', 'doctor', 'employee', 'patient') NOT NULL DEFAULT 'patient', -- Perfil de acesso do usuário
+    `status` ENUM('ativo','bloqueado','inativo') NOT NULL DEFAULT 'ativo',
+    `data_desligamento` DATE NULL,
     `create_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Data de criação/última modificação
     PRIMARY KEY(`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -64,18 +66,18 @@ CREATE TABLE `users` (
 INSERT INTO `users` ( `name`, `surname`, `bi_passport`, `email`, `phone`, `birth_date`, `gender`, `address`, `password`, `profile`)
 VALUES
 ('António', 'Garcia', '000000000LA000', 'antonio.garcia@gmail.com', '+244928740538', '2006-06-15', 'm', DEFAULT, '$2y$10$OtIVTQA1bNVHZ.wcrhkM8O/Bx6skQNWYeCcX/o76Sz3wBSN4wEYca', 'admin'), 
-('Feliciana', 'David', '000000001LA000', 'feliciana.david@gmail.com', '+244928740538', '2006-06-15', 'f', DEFAULT, '$2y$10$NQem3qD7nQv6Xh/c3zBQteX594SkCHjZi76u2Z65mjnXYbtYXyWLu', 'admin'), 		
-('João', 'Silva', '000000002LA000', 'joao.silva@gmail.com', '+244928740538', '1995-06-15', 'm', DEFAULT, '$2y$10$mJhLcXLi/SgKjiHsMj79buyPz5r6Gcy9odoN6BSF84GCzBI1luzT6', 'employee'),
-('Maria', 'Santos', '000000003LA000', 'maria.santos@gmail.com', '+244928740539', '1980-06-22', 'f', DEFAULT, '$2y$10$ei2yCiodjuoq35XYbT6h6er1TOP0mRTTZ2tJn6z0ow0CPlShBM1i.', 'employee'),
-('Deusa', 'Piris', '000000004LA000', 'deusa.piris@gmail.com', '+244928740539', '1980-06-22', 'f', DEFAULT, '$2y$10$/m/Ku0M3xvfCbzr8.i45M.2SjUHx5ocqNMVwCEYEOYuNjNYfROvwi', 'employee'),
-('Carlos', 'Pereira', '000000005LA000', 'carlos.pereira@gmail.com', '+244928740540', '1990-01-05', 'm', DEFAULT, '$2y$10$HdUjbmyl3Vo4W0CeVn4cxOMmZL4lkrEKRJyvMGd7CgUk0MoaA5Itm', 'doctor'),
-('Ana', 'Oliveira', '000000006LA000', 'ana.oliveira@gmail.com', '+244928740541', '1985-12-30', 'f', DEFAULT, '$2y$10$es4hXiaoNs8BSLGBxzf5reD6q9yAtr3OcZ7n.jOsQIlWlkZRguNea', 'doctor'),
-('David', 'Maia', '000000007LA000', 'david.maia@gmail.com', '+244928740541', '1985-12-30', 'm', DEFAULT, '$2y$10$6cIaf4xKPbL5LPNhdYYOaO7t7kM4oVkNHE7LAr/KScBn3WlFBOr1O', 'doctor'),
-('Frederico', 'Pimenta', '000000008LA000', 'frederico.pimenta@gmail.com', '+244928740541', '1985-12-30', 'm', DEFAULT, '$2y$10$KbzeKzvNAIHpiYygREyNfeWS2..wzw.iNTmniFOJ3AqFQK3j6mZuO', 'doctor'),
-('Pedro', 'Costa', '000000009LA000', 'pedro.costa@gmail.com', '+244928740542', '1989-07-15', 'm', 'Luanda-Angola', '$2y$10$THy2.PnsEJF1ov/XYzIFG.yK61eLcAt78v37ci4BtrOvh5iA6bYsa', 'patient'),
-('Sofia', 'Rodrigues', '000000010LA000', 'sofia.rodrigues@gmail.com', '+244928740543', '2000-08-28', 'f', 'Gamek-Luanda', '$2y$10$clOyZpo5Km5nZQkLYsvbNu2T5o8G2Pm3NolurJ2DM3Tytdpd/Vmrq', 'patient'),
-('Miguel', 'Ferreira', '000000011LA000', 'miguel.ferreira@gmail.com', '+244928740544', '2001-09-14', 'm', 'Luanda-Angola', '$2y$10$oaw0.sXGX1Qi2grUrT1zN.Ksie75NqjD3rFaVtm7qgFH3sbhpLGjK', 'patient'),
-('Beatriz', 'Almeida', '000000012LA000', 'beatriz.almeida@gmail.com', '+244928740545', '1997-04-26', 'f', 'Gamek-Luanda', '$2y$10$YXlvbhaoQwe2WPwIJvtJFudsv/7rxK0CJgb88XzuYAwn8msN6aow.', 'patient');
+('Feliciana', 'David', '000000000LA001', 'feliciana.david@gmail.com', '+244928740538', '2006-06-15', 'f', DEFAULT, '$2y$10$NQem3qD7nQv6Xh/c3zBQteX594SkCHjZi76u2Z65mjnXYbtYXyWLu', 'admin'), 		
+('João', 'Silva', '000000000LA002', 'joao.silva@gmail.com', '+244928740538', '1995-06-15', 'm', DEFAULT, '$2y$10$mJhLcXLi/SgKjiHsMj79buyPz5r6Gcy9odoN6BSF84GCzBI1luzT6', 'employee'),
+('Maria', 'Santos', '000000000LA003', 'maria.santos@gmail.com', '+244928740539', '1980-06-22', 'f', DEFAULT, '$2y$10$ei2yCiodjuoq35XYbT6h6er1TOP0mRTTZ2tJn6z0ow0CPlShBM1i.', 'employee'),
+('Deusa', 'Piris', '000000000LA004', 'deusa.piris@gmail.com', '+244928740539', '1980-06-22', 'f', DEFAULT, '$2y$10$/m/Ku0M3xvfCbzr8.i45M.2SjUHx5ocqNMVwCEYEOYuNjNYfROvwi', 'employee'),
+('Carlos', 'Pereira', '000000000LA005', 'carlos.pereira@gmail.com', '+244928740540', '1990-01-05', 'm', DEFAULT, '$2y$10$HdUjbmyl3Vo4W0CeVn4cxOMmZL4lkrEKRJyvMGd7CgUk0MoaA5Itm', 'doctor'),
+('Ana', 'Oliveira', '000000000LA006', 'ana.oliveira@gmail.com', '+244928740541', '1985-12-30', 'f', DEFAULT, '$2y$10$es4hXiaoNs8BSLGBxzf5reD6q9yAtr3OcZ7n.jOsQIlWlkZRguNea', 'doctor'),
+('David', 'Maia', '000000000LA007', 'david.maia@gmail.com', '+244928740541', '1985-12-30', 'm', DEFAULT, '$2y$10$6cIaf4xKPbL5LPNhdYYOaO7t7kM4oVkNHE7LAr/KScBn3WlFBOr1O', 'doctor'),
+('Frederico', 'Pimenta', '000000000LA008', 'frederico.pimenta@gmail.com', '+244928740541', '1985-12-30', 'm', DEFAULT, '$2y$10$KbzeKzvNAIHpiYygREyNfeWS2..wzw.iNTmniFOJ3AqFQK3j6mZuO', 'doctor'),
+('Pedro', 'Costa', '000000000LA009', 'pedro.costa@gmail.com', '+244928740542', '1989-07-15', 'm', 'Luanda-Angola', '$2y$10$THy2.PnsEJF1ov/XYzIFG.yK61eLcAt78v37ci4BtrOvh5iA6bYsa', 'patient'),
+('Sofia', 'Rodrigues', '000000000LA010', 'sofia.rodrigues@gmail.com', '+244928740543', '2000-08-28', 'f', 'Gamek-Luanda', '$2y$10$clOyZpo5Km5nZQkLYsvbNu2T5o8G2Pm3NolurJ2DM3Tytdpd/Vmrq', 'patient'),
+('Miguel', 'Ferreira', '000000000LA011', 'miguel.ferreira@gmail.com', '+244928740544', '2001-09-14', 'm', 'Luanda-Angola', '$2y$10$oaw0.sXGX1Qi2grUrT1zN.Ksie75NqjD3rFaVtm7qgFH3sbhpLGjK', 'patient'),
+('Beatriz', 'Almeida', '000000000LA012', 'beatriz.almeida@gmail.com', '+244928740545', '1997-04-26', 'f', 'Gamek-Luanda', '$2y$10$YXlvbhaoQwe2WPwIJvtJFudsv/7rxK0CJgb88XzuYAwn8msN6aow.', 'patient');
 
 -- Tabela de funcionários para o hospital, para armazenar as informações dos funcionários, incluindo o cargo e a associação com o usuário correspondente na tabela de usuários. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
 DROP TABLE IF EXISTS `employee`;
@@ -87,7 +89,8 @@ CREATE TABLE `employee` (
 
 INSERT INTO `employee` (`id`, `cargo`)
 VALUES 	( 3, 'recepcionista'),
-		( 4, 'enfermeiro');
+		( 4, 'enfermeiro'),
+		( 5, 'enfermeiro');
         
   
 -- Tabela de médicos para o hospital, para armazenar as informações dos médicos, incluindo a especialidade e a associação com o usuário correspondente na tabela de usuários. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
@@ -123,6 +126,7 @@ CREATE TABLE `patient` (
     `has_disability` TINYINT(1) NOT NULL DEFAULT 0,
     `disability_type` VARCHAR(100) NULL,
     `address` TEXT NOT NULL DEFAULT '', -- Endereço residencial
+    `provincia` TEXT NOT NULL DEFAULT 'Luanda', -- Endereço residencial
     `register_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY(`id`),
     FOREIGN KEY(`uid`) REFERENCES `users`(`uid`) ON DELETE SET NULL,
@@ -130,16 +134,28 @@ CREATE TABLE `patient` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `patient` 
-(`uid`, `id_blood_type`, `full_name`, `bi_passport`, `phone`, `gender`, `status`, `birth_date`, `alergias`, `address`)
+(`uid`, `id_blood_type`, `full_name`, `bi_passport`, `phone`, `gender`, `status`, `birth_date`, `alergias`, `address`, `provincia`)
 VALUES
-(10, 2, 'Pedro Costa', '000000009LA000', '+244900000001', 'm', DEFAULT, '2000-02-10', DEFAULT, 'Luanda'),
-( 11, 8, 'Sofia Rodrigues', '000000010LA000', '+244900000002', 'f', DEFAULT, '1995-06-15', 'Penicilina', 'Catumbela-Benguela'),
-(NULL, 4, 'Luís Gomes', '000000014LA000', '+244928740538', 'm', 'inactive', '1980-07-30', DEFAULT, 'Luanda-Angola'),
-(NULL, 8, 'Inês Martins', '000000015LA000', '+244928740538', 'f', DEFAULT, '1994-10-15', 'Poeira', 'Gamek-Luanda'),
-(NULL, 6, 'Rui Lopes', '000000016LA000', '+244928740538', 'm', DEFAULT, '2000-04-06', 'Lactose', 'Luanda-Angola'),
-(NULL, 3, 'Catarina Sousa', '000000017LA000', '+244928740538', 'f', DEFAULT, '1995-10-20', DEFAULT, 'Gamek-Luanda'),
-(12, 1, 'Miguel Ferreira', '000000011LA000', '+244928740538', 'm', DEFAULT, '1995-10-20', DEFAULT, 'Gamek-Luanda');
+(10, 2, 'Pedro Costa', '000000000LA013', '+244900000001', 'm', DEFAULT, '2000-02-10', DEFAULT, 'Maianga', DEFAULT),
+( 11, 8, 'Sofia Rodrigues', '000000000LA014', '+244900000002', 'f', DEFAULT, '1995-06-15', 'Penicilina', 'Catumbela', 'Benguela'),
+(NULL, 8, 'Inês Martins', '000000000LA015', '+244928740538', 'f', DEFAULT, '1994-10-15', 'Poeira', 'Gamek', DEFAULT),
+(NULL, 6, 'Rui Lopes', '000000000LA016', '+244928740538', 'm', DEFAULT, '2000-04-06', 'Lactose', 'Rangel', DEFAULT),
+(NULL, 3, 'Catarina Sousa', '000000000LA017', '+244928740538', 'f', DEFAULT, '1995-10-20', DEFAULT, 'Catete', 'Icolo e Bengo'),
+(12, 1, 'Miguel Ferreira', '000000000LA018', '+244928740538', 'm', DEFAULT, '1995-10-20', DEFAULT, 'Praca nova', 'Bie');
 
+-- Pacientes com deficiência 
+INSERT INTO `patient` 
+(`uid`, `id_blood_type`, `full_name`, `bi_passport`, `phone`, `gender`, `status`, `birth_date`, `alergias` , `has_disability`, `disability_type`, `address`, `provincia`)
+VALUES
+(NULL, 3, 'Serafim Costa', '000000000LA019', '+244900000001', 'm', DEFAULT, '2000-12-12', DEFAULT, 1, 'Visual', 'Caquaco', DEFAULT),
+( NULL, 8, 'Lola Ramos', '000000000LA020', '+244900000002', 'f', DEFAULT, '1995-06-15', DEFAULT, 1, 'Física', 'Menogue', 'Malanje');
+
+-- Pacientes falecidos
+INSERT INTO `patient` 
+(`uid`, `id_blood_type`, `full_name`, `bi_passport`, `phone`, `gender`, `status`, `birth_date`, `death_date`,  `alergias`, `address`)
+VALUES
+(NULL, 4, 'Marcoa Ascensio', '000000000LA021', '+244928740538', 'm', 'inactive', '1980-07-30', '2021-03-20', DEFAULT, 'Camama'),
+(NULL, 5, 'Luís Gomes', '000000000LA022', '+244928740538', 'm', 'inactive', '1980-07-30', '2024-07-13', DEFAULT, 'Viana');
 
 -- Tabela de triagem para o hospital, para armazenar as informações das triagens realizadas pelos funcionários, incluindo o peso, a temperatura e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
 -- 1. Recriação da tabela com as colunas de suporte à vida
@@ -325,7 +341,7 @@ CREATE TABLE `prontuarios`(
     `id` INT AUTO_INCREMENT, -- Identificador único do prontuário
     `id_consulta` INT UNIQUE, -- Consulta vinculada ao prontuário
     `sintomas` TEXT, -- Sintomas relatados pelo paciente
-    `diagnostico` VARBINARY, -- Diagnóstico final registrado
+    `diagnostico` LONGBLOB, -- Diagnóstico final registrado
     `tratamento` TEXT, -- Tratamento recomendado
     `observacoes` TEXT, -- Observações adicionais
     `data_registro` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Data de criação do prontuário
