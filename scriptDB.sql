@@ -53,6 +53,7 @@ CREATE TABLE `users` (
     `gender` ENUM('m', 'f') NOT NULL, -- Gênero do usuário (m = masculino ou f = femenino)
     `has_disability` TINYINT(1) NOT NULL DEFAULT 0, -- Deficiência 0 = Não é / 1 = é deficiente
     `disability_type` VARCHAR(100) NOT NULL DEFAULT 'Nenhuma',
+    `nacioality` TEXT NOT NULL DEFAULT 'Angolana', -- Nacionalidade do paciente
     `address` TEXT NOT NULL DEFAULT 'Desconhecido', -- Endereço residencial
     `provincia` TEXT NOT NULL DEFAULT 'Luanda', -- Endereço residencial
     `password` VARCHAR(255) NOT NULL, -- Senha criptografada
@@ -125,8 +126,9 @@ CREATE TABLE `patient` (
     `alergias` TEXT NULL DEFAULT 'Nenhuma', -- Alergias conhecidas
     `has_disability` TINYINT(1) NOT NULL DEFAULT 0, -- Deficiência 0 = Não é / 1 = é deficiente
     `disability_type` VARCHAR(100) NOT NULL DEFAULT 'Nenhuma', -- Tipo de deficiência
-    `address` TEXT NOT NULL DEFAULT 'Desconhecido', -- Endereço residencial
+    `nacioality` TEXT NOT NULL DEFAULT 'Angolana', -- Nacionalidade do paciente
     `provincia` TEXT NOT NULL DEFAULT 'Luanda', -- Endereço residencial
+    `address` TEXT NOT NULL DEFAULT 'Desconhecido', -- Endereço residencial
     `register_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY(`id`),
     FOREIGN KEY(`uid`) REFERENCES `users`(`uid`) ON DELETE SET NULL,
