@@ -61,6 +61,8 @@ CREATE TABLE `users` (
     `status` ENUM('ativo','bloqueado','inativo') NOT NULL DEFAULT 'ativo',
     `data_desligamento` DATE NULL,
     `create_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Data de criação/última modificação
+    `reset_token` VARCHAR(255) DEFAULT NULL, -- Data de criação/última modificação
+    `token_expira` VARCHAR(255) DEFAULT NULL, -- Data de criação/última modificação
     PRIMARY KEY(`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -387,6 +389,7 @@ CREATE TABLE `consulta` (
     `origin` ENUM('Agendada', 'Emergência') NOT NULL DEFAULT 'Agendada',
     `status` ENUM('marcada', 'em_andamento', 'finalizada', 'cancelada') NOT NULL DEFAULT 'marcada', -- Situação da consulta
     `observacoes` TEXT DEFAULT '', -- Observações feitas pelo médico ou funcionário
+    `lembrete_enviado` INT(11) DEFAULT NULL,
     PRIMARY KEY(`id`),
     FOREIGN KEY(`id_triagem`) REFERENCES `triagem`(`id`),
     FOREIGN KEY(`id_specialty`) REFERENCES `specialty`(`id`),
