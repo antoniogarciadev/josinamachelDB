@@ -53,7 +53,7 @@ CREATE TABLE `users` (
     `gender` ENUM('m', 'f') NOT NULL, -- Gênero do usuário (m = masculino ou f = femenino)
     `has_disability` TINYINT(1) NOT NULL DEFAULT 0, -- Deficiência 0 = Não é / 1 = é deficiente
     `disability_type` VARCHAR(100) NOT NULL DEFAULT 'Nenhuma',
-    `nacioality` TEXT NOT NULL DEFAULT 'Angolana', -- Nacionalidade do paciente
+    `nacionality` TEXT NOT NULL DEFAULT 'Angolana', -- Nacionalidade do paciente
     `address` TEXT NOT NULL DEFAULT 'Desconhecido', -- Endereço residencial
     `provincia` TEXT NOT NULL DEFAULT 'Luanda', -- Endereço residencial
     `password` VARCHAR(255) NOT NULL, -- Senha criptografada
@@ -126,7 +126,7 @@ CREATE TABLE `patient` (
     `alergias` TEXT NULL DEFAULT 'Nenhuma', -- Alergias conhecidas
     `has_disability` TINYINT(1) NOT NULL DEFAULT 0, -- Deficiência 0 = Não é / 1 = é deficiente
     `disability_type` VARCHAR(100) NOT NULL DEFAULT 'Nenhuma', -- Tipo de deficiência
-    `nacioality` TEXT NOT NULL DEFAULT 'Angolana', -- Nacionalidade do paciente
+    `nacionality` TEXT NOT NULL DEFAULT 'Angolana', -- Nacionalidade do paciente
     `provincia` TEXT NOT NULL DEFAULT 'Luanda', -- Endereço residencial
     `address` TEXT NOT NULL DEFAULT 'Desconhecido', -- Endereço residencial
     `register_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -166,19 +166,19 @@ CREATE TABLE `triagem` (
     `id` INT AUTO_INCREMENT,
     `id_employee` INT, 
     `id_patient` INT, 
-    `id_specialty` INT, -- Nova Coluna
+    `id_specialty` INT NOT NULL,
     `peso` DOUBLE NULL, 
     `pressao` VARCHAR(20) NULL, 
     `temperatura` DOUBLE NULL, 
     `freq_cardiaca` INT NULL,
     `clinical_risk` ENUM('Vermelho(Emergência)', 'Laranja(Muito Urgente)', 'Amarelo(Urgente)', 'Verde(Pouco Urgente)', 'Azul(Não Urgente)') NULL,
     `queixa_principal` TEXT NULL,
-    `status` ENUM('pendente', 'em_espera', 'concluida') NOT NULL DEFAULT 'em_espera',
+    `status` ENUM('pendente', 'em_espera', 'concluida') NOT NULL DEFAULT 'pendente',
     `data` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
     PRIMARY KEY(`id`),
     FOREIGN KEY(`id_employee`) REFERENCES `employee`(`id`),
     FOREIGN KEY(`id_patient`) REFERENCES `patient`(`id`),
-    FOREIGN KEY(`id_specialty`) REFERENCES `specialty`(`id`) -- Chave Estrangeira
+    FOREIGN KEY(`id_specialty`) REFERENCES `specialty`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- 3. Inserts Atualizados (Incluindo a Especialidade)
@@ -186,90 +186,219 @@ INSERT INTO `triagem`
 (`id_employee`, `id_patient`, `id_specialty`, `peso`, `pressao`, `temperatura`, `freq_cardiaca`, `clinical_risk`, `queixa_principal`)
 VALUES 
 -- Crítico (Cardiologia)
-(4, 4, 5, 75.0, '8/5', 35.5, 135, 'Vermelho(Emergência)', 'Paciente inconsciente, possível paragem cardiorrespiratória.'),
+(4, 4, 1, 75.0, '8/5', 35.5, 135, 'Vermelho(Emergência)', 'Paciente inconsciente, possível paragem cardiorrespiratória.'),
 -- Muito Urgente (Medicina Geral)
-(4, 2, 1, 65.2, '16/10', 38.8, 105, 'Laranja(Muito Urgente)', 'Dor torácica intensa e dificuldade respiratória.'),
+(4, 2, 4, 65.2, '16/10', 38.8, 105, 'Laranja(Muito Urgente)', 'Dor torácica intensa e dificuldade respiratória.'),
 -- Urgente (Pediatria)
-(3, 5, 2, 82.0, '14/9', 39.0, 95, 'Amarelo(Urgente)', 'Febre alta e desidratação.'),
+(3, 5, 1, 82.0, '14/9', 39.0, 95, 'Amarelo(Urgente)', 'Febre alta e desidratação.'),
 -- Pouco Urgente (Ortopedia)
-(3, 1, 3, 70.0, '12/8', 36.6, 72, 'Verde(Pouco Urgente)', 'Entorse no tornozelo sem deformidade.'),
+(3, 1, 5, 70.0, '12/8', 36.6, 72, 'Verde(Pouco Urgente)', 'Entorse no tornozelo sem deformidade.'),
 -- Não Urgente (Medicina Geral)
-(3, 6, 1, 60.5, '11/7', 36.2, 80, 'Azul(Não Urgente)', 'Dores musculares leves há 3 dias.');
+(3, 6, 4, 60.5, '11/7', 36.2, 80, 'Azul(Não Urgente)', 'Dores musculares leves há 3 dias.');
 
 -- 4. Query de Listagem Inteligente (Por Risco e agora mostrando a Especialidade)
-SELECT 
+SELECT
     t.id,
-    p.full_name AS Paciente,
-    s.name AS Especialidade,
-    t.clinical_risk AS Risco,
-    t.queixa_principal AS Queixa,
+    p.full_name,
+    t.clinical_risk,
+    t.queixa_principal,
+    s.name AS especialidade,
     t.data
 FROM triagem t
-JOIN patient p ON t.id_patient = p.id
-JOIN specialty s ON t.id_specialty = s.id
-ORDER BY FIELD(t.clinical_risk, 'Vermelho(Emergência)', 'Laranja(Muito Urgente)', 'Amarelo(Urgente)', 'Verde(Pouco Urgente)', 'Azul(Não Urgente)'), t.data ASC;
+JOIN patient p
+    ON p.id = t.id_patient
+JOIN specialty s
+    ON s.id = t.id_specialty
+ORDER BY FIELD(
+    t.clinical_risk,
+    'Vermelho(Emergência)',
+    'Laranja(Muito Urgente)',
+    'Amarelo(Urgente)',
+    'Verde(Pouco Urgente)',
+    'Azul(Não Urgente)'
+),
+t.data ASC;
 
-DROP TABLE IF EXISTS `emergencia`;
-CREATE TABLE `emergencia` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `id_triagem` INT NOT NULL,
-    `id_doctor` INT NULL, -- Pode ser NULL até um médico assumir o caso
-    `hora_entrada` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `hora_primeiro_atendimento` DATETIME NULL,
-    `status` ENUM('aguardando', 'em_atendimento', 'em_observacao', 'transferido', 'alta', 'obito') DEFAULT 'aguardando',
-    `conduta_imediata` TEXT, -- Ex: "Aplicar oxigênio", "Encaminhar para choque"
-    FOREIGN KEY(`id_triagem`) REFERENCES `triagem`(`id`),
-    FOREIGN KEY(`id_doctor`) REFERENCES `doctor`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+DROP TABLE IF EXISTS `emergency`;
+CREATE TABLE emergency (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_triagem INT NOT NULL,
+    id_doctor INT NULL,
+    id_employee INT NULL,
+    entry_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    first_attendance DATETIME NULL,
+    discharge_datetime DATETIME NULL,
+    immediate_conduct TEXT NULL,
+    observations TEXT NULL,
+    priority_level ENUM('Vermelho(Emergência)', 'Laranja(Muito Urgente)', 'Amarelo(Urgente)', 'Verde(Pouco Urgente)', 'Azul(Não Urgente)') NULL,
+    status ENUM(
+        'aguardando_medico',
+        'em_atendimento',
+        'internado',
+        'alta',
+        'obito'
+    ) DEFAULT 'aguardando_medico',
+    destination ENUM(
+        'Consulta',
+        'Internamento',
+        'Cirurgia',
+        'Alta',
+        'Transferência',
+        'Óbito'
+    ) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_emergency_triagem
+    FOREIGN KEY(id_triagem) REFERENCES triagem(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_emergency_employee FOREIGN KEY(id_employee) REFERENCES employee(id) ON DELETE SET NULL,
+    CONSTRAINT fk_emergency_doctor FOREIGN KEY(id_doctor) REFERENCES doctor(id) ON DELETE SET NULL
+);
+-- 3. Inserts Atualizados (Incluindo a Especialidade)
+INSERT INTO emergency
+(
+    id_triagem,
+    id_doctor,
+    id_employee,
+    priority_level,
+    status,
+    immediate_conduct
+)
+VALUES
 
--- 1. Paciente em Estado Crítico (Vermelho) - Já com conduta imediata
--- Usamos o id_triagem 4 (que foi o nosso caso de Parada Cardiorrespiratória)
-INSERT INTO `emergencia` 
-(`id_triagem`, `id_doctor`, `hora_entrada`, `status`, `conduta_imediata`)
-VALUES 
-(4, 6, NOW(), 'em_atendimento', 'Iniciar manobras de RCP e administrar Epinefrina. Preparar desfibrilador.');
+(1,NULL,4, 'Vermelho(Emergência)','aguardando_medico',NULL),
 
--- 2. Paciente Muito Urgente (Laranja) - Aguardando médico. Usamos o id_triagem 3 (Suspeita de AVC)
-INSERT INTO `emergencia`(`id_triagem`, `id_doctor`, `hora_entrada`, `status`, `conduta_imediata`)
-VALUES 
-(3, NULL, NOW(), 'aguardando', 'Monitorização contínua de sinais vitais e acesso venoso periférico.');
+(2,NULL,5, 'Laranja(Muito Urgente)','aguardando_medico',NULL),
 
--- 3. Paciente Urgente (Amarelo) - Em observaçã, Usamos o id_triagem 2 (Febre e dor abdominal)
-INSERT INTO `emergencia` (`id_triagem`, `id_doctor`, `hora_entrada`, `hora_primeiro_atendimento`, `status`, `conduta_imediata`)
-VALUES (2, 6, NOW(), NOW(), 'em_observacao', 'Administração de analgésicos e aguardando resultados de exames laboratoriais.');
+(3,6, 5,'Amarelo(Urgente)','em_atendimento','Administração de oxigênio'),
+
+(4,7, 4, 'Vermelho(Emergência)','internado','Internamento imediato'),
+
+(5,8, 5, 'Azul(Não Urgente)','alta','Paciente estabilizado');
 
 SELECT 
     p.full_name AS Paciente,
     t.clinical_risk AS Prioridade,
     e.status AS Situacao,
-    e.conduta_imediata AS Conduta,
+    ue.name AS Funcionario_Responsavel,
+    e.immediate_conduct AS Conduta,
     u.name AS Medico_Responsavel
-FROM emergencia e
+FROM emergency e
 JOIN triagem t ON e.id_triagem = t.id
 JOIN patient p ON t.id_patient = p.id
+JOIN employee emp ON e.id_employee = emp.id
+JOIN users ue ON emp.id = ue.uid
 LEFT JOIN users u ON e.id_doctor = u.uid
 ORDER BY FIELD(t.clinical_risk, 'Vermelho(Emergência)', 'Laranja(Muito Urgente)', 'Amarelo(Urgente)');
 -- Tabela de consultas para o hospital, para armazenar as informações das consultas realizadas pelos médicos, incluindo a data, a hora marcada, o status e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
+
+DROP TABLE IF EXISTS emergency_procedure;
+
+CREATE TABLE emergency_procedure (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    id_emergency INT NOT NULL,
+
+    procedure_name VARCHAR(100) NOT NULL,
+
+    description TEXT,
+
+    performed_by INT NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+
+    FOREIGN KEY(id_emergency)
+    REFERENCES emergency(id),
+
+    FOREIGN KEY(performed_by)
+    REFERENCES employee(id)
+
+);
+
+INSERT INTO emergency_procedure
+(
+id_emergency,
+procedure_name,
+description,
+performed_by
+)
+VALUES
+
+(1,'Oxigênio',
+'Administração de oxigênio por máscara',
+4),
+
+(1,'Reanimação',
+'Manobras de suporte básico de vida',
+4);
+
+DROP TABLE IF EXISTS emergency_medication;
+
+
+CREATE TABLE emergency_medication(
+
+id INT AUTO_INCREMENT PRIMARY KEY,
+
+id_emergency INT NOT NULL,
+
+medication VARCHAR(100),
+
+dose VARCHAR(50),
+
+administration_time DATETIME,
+
+id_employee INT,
+
+
+FOREIGN KEY(id_emergency)
+REFERENCES emergency(id),
+
+FOREIGN KEY(id_employee)
+REFERENCES employee(id)
+
+);
+
+INSERT INTO emergency_medication
+(
+id_emergency,
+medication,
+dose,
+administration_time,
+id_employee
+)
+
+VALUES
+
+(1,
+'Adrenalina',
+'1mg',
+NOW(),
+4);
+
 DROP TABLE IF EXISTS `consulta`;
 CREATE TABLE `consulta` (
     `id` INT AUTO_INCREMENT, -- Identificador da consulta
     `id_triagem` INT NOT NULL, -- Triagem associada à consulta
+    `id_specialty` INT NOT NULL, -- Especalidade da consulta
     `id_doctor` INT NOT NULL, -- Médico responsável pela consulta
     `data_consulta` DATE NOT NULL, -- Data agendada da consulta
     `hora_marcada` TIME NOT NULL, -- Hora marcada para a consulta
+    `origin` ENUM('Agendada', 'Emergência') NOT NULL DEFAULT 'Agendada',
     `status` ENUM('marcada', 'em_andamento', 'finalizada', 'cancelada') NOT NULL DEFAULT 'marcada', -- Situação da consulta
     `observacoes` TEXT DEFAULT '', -- Observações feitas pelo médico ou funcionário
     PRIMARY KEY(`id`),
     FOREIGN KEY(`id_triagem`) REFERENCES `triagem`(`id`),
+    FOREIGN KEY(`id_specialty`) REFERENCES `specialty`(`id`),
     FOREIGN KEY(`id_doctor`) REFERENCES `doctor`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `consulta`
-(`id_triagem`, `id_doctor`, `data_consulta`, `hora_marcada`, `status`, `observacoes`)
+(`id_triagem`, `id_specialty`, `id_doctor`, `data_consulta`, `hora_marcada`, `status`, `observacoes`)
 VALUES
-(1, 6, '2026-03-05', '09:00:00', 'finalizada', 'Primeira consulta'),
-(2, 7, '2026-03-05', '10:00:00', 'finalizada', 'Paciente medicado'),
-(3, 6, '2026-07-05', '12:00:00', 'marcada', DEFAULT);
+(1, 1, 6, '2026-03-05', '09:00:00', 'finalizada', 'Primeira consulta'),
+(2, 4, 7, '2026-03-05', '10:00:00', 'finalizada', 'Paciente medicado'),
+(3, 1, 6, '2026-07-05', '12:00:00', 'marcada', DEFAULT);
 
 
 -- Tabela de tipos de exames para o hospital, para armazenar as informações dos diferentes tipos de exames disponíveis, incluindo a descrição. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde, além de fornecer informações claras aos pacientes sobre os exames realizados.
@@ -334,7 +463,8 @@ INSERT INTO `receita`
 (`id_consulta`, `data_receita`, `observacao`, `remedios`, `dosagem`, `frequencia`)
 VALUES
 ( 1, NOW(), 'Tomar por 5 dias', 'Paracetamol', '500mg', '8/8h'),
-( 2, NOW(), 'Tomar por 7 dias', 'Amoxicilina', '500mg', '12/12h');
+( 2, NOW(), 'Tomar por 7 dias', 'Amoxicilina', '500mg', '12/12h'),
+( 3, NOW(), 'Tomar por 15 dias', 'Paracetamol, metro', '500mg', '8/8h');
 
 
 -- Tabela de prontuários para o hospital, para armazenar as informações dos prontuários dos pacientes, incluindo os sintomas, o diagnóstico, o tratamento e as observações. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde.
@@ -363,8 +493,8 @@ DROP TABLE IF EXISTS `room`;
 CREATE TABLE `room` (
     `id` INT AUTO_INCREMENT, -- Identificador único do quarto
     `id_specialty` INT, -- Especialidade à qual o quarto pertence
-    `leitos` INT NOT NULL, -- Quantidade de leitos no quarto
     `piso` INT, -- Piso onde o quarto está localizado
+    `leitos` INT NOT NULL, -- Quantidade de leitos no quarto
     PRIMARY KEY(`id`),
     FOREIGN KEY(`id_specialty`) REFERENCES `specialty`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -384,6 +514,7 @@ CREATE TABLE `hospitalization` (
     `id` INT AUTO_INCREMENT, -- Identificador único do internamento
     `id_consulta` INT NOT NULL, -- Identificador da consulta que originou o internamento
     `id_room` INT NOT NULL, -- Quarto onde o paciente ficará
+    `bed_number` VARCHAR(20) NULL,
 	`clinical_state` ENUM('Estável', 'Estável Grave', 'Instável', 'Gravíssimo') NOT NULL, -- Estado do internamento
     `data_entrada` DATE NOT NULL, -- Data de entrada no internamento
     `data_alta` DATE NULL, -- Data de saída do internamento (Pode ser NULL se ativo)
@@ -395,10 +526,27 @@ CREATE TABLE `hospitalization` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `hospitalization`
-(`id_consulta`, `id_room`, `clinical_state`, `data_entrada`, `data_alta`, `tipo_alta`, `observacao`)
+(`id_consulta`, `id_room`, `bed_number`, `clinical_state`, `data_entrada`, `data_alta`, `tipo_alta`, `observacao`)
 VALUES
-(1, 1, 'Estável', '2026-03-05', '2026-03-08', 'Alta hospitalar', 'Paciente apresentou melhoras progressivas nas primeiras 48h.'),
-(2, 2, 'Instável', '2026-03-06', '2026-03-09', 'Alta não hospitalar', 'Transferido para Hospital Geral');
+(1, 1, 'Leito 1', 'Estável', '2026-03-05', '2026-03-08', 'Alta hospitalar', 'Paciente apresentou melhoras progressivas nas primeiras 48h.'),
+(2, 2, 'Leito 2', 'Instável', '2026-03-06', '2026-03-09', 'Alta não hospitalar', 'Transferido para Hospital Geral');
+
+SELECT p.full_name AS patient, CONCAT(u.name,' ',u.surname) AS doctor, c.data_consulta
+FROM consulta c
+JOIN triagem t ON t.id = c.id_triagem
+JOIN patient p ON p.id = t.id_patient
+JOIN doctor m ON m.id = c.id_doctor
+JOIN users u ON u.uid = m.id;
+
+SELECT p.full_name AS patient, CONCAT(u.name,' ',u.surname) AS doctor, c.data_consulta
+FROM hospitalization h
+JOIN room r ON r.id = h.id_room
+JOIN specialty s ON s.id = r.id_specialty
+JOIN consulta c ON c.id = h.id_consulta
+JOIN triagem t ON t.id = c.id_triagem
+JOIN patient p ON p.id = t.id_patient
+JOIN doctor m ON m.id = c.id_doctor
+JOIN users u ON u.uid = m.id;
 
 	
 SELECT p.full_name AS patient, CONCAT(u.name,' ',u.surname) AS doctor, c.data_consulta
