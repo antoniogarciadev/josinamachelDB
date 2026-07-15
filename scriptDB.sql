@@ -185,18 +185,18 @@ CREATE TABLE `triagem` (
 
 -- 3. Inserts Atualizados (Incluindo a Especialidade)
 INSERT INTO `triagem` 
-(`id_employee`, `id_patient`, `id_specialty`, `peso`, `pressao`, `temperatura`, `freq_cardiaca`, `clinical_risk`, `queixa_principal`)
+(`id_employee`, `id_patient`, `id_specialty`, `peso`, `pressao`, `temperatura`, `freq_cardiaca`, `clinical_risk`, `queixa_principal`, `status`)
 VALUES 
 -- Crítico (Cardiologia)
-(4, 4, 1, 75.0, '8/5', 35.5, 135, 'Vermelho(Emergência)', 'Paciente inconsciente, possível paragem cardiorrespiratória.'),
+(4, 4, 1, 75.0, '8/5', 35.5, 135, 'Vermelho(Emergência)', 'Paciente inconsciente, possível paragem cardiorrespiratória.', 'concluida'),
 -- Muito Urgente (Medicina Geral)
-(4, 2, 4, 65.2, '16/10', 38.8, 105, 'Laranja(Muito Urgente)', 'Dor torácica intensa e dificuldade respiratória.'),
+(4, 2, 4, 65.2, '16/10', 38.8, 105, 'Laranja(Muito Urgente)', 'Dor torácica intensa e dificuldade respiratória.', 'concluida'),
 -- Urgente (Pediatria)
-(3, 5, 1, 82.0, '14/9', 39.0, 95, 'Amarelo(Urgente)', 'Febre alta e desidratação.'),
+(3, 5, 1, 82.0, '14/9', 39.0, 95, 'Amarelo(Urgente)', 'Febre alta e desidratação.', 'concluida'),
 -- Pouco Urgente (Ortopedia)
-(3, 1, 5, 70.0, '12/8', 36.6, 72, 'Verde(Pouco Urgente)', 'Entorse no tornozelo sem deformidade.'),
+(3, 1, 5, 70.0, '12/8', 36.6, 72, 'Verde(Pouco Urgente)', 'Entorse no tornozelo sem deformidade.', 'concluida'),
 -- Não Urgente (Medicina Geral)
-(3, 6, 4, 60.5, '11/7', 36.2, 80, 'Azul(Não Urgente)', 'Dores musculares leves há 3 dias.');
+(3, 6, 4, 60.5, '11/7', 36.2, 80, 'Azul(Não Urgente)', 'Dores musculares leves há 3 dias.', 'concluida');
 
 -- 4. Query de Listagem Inteligente (Por Risco e agora mostrando a Especialidade)
 SELECT
@@ -383,17 +383,23 @@ CREATE TABLE `consulta` (
     `id` INT AUTO_INCREMENT, -- Identificador da consulta
     `id_triagem` INT NOT NULL, -- Triagem associada à consulta
     `id_specialty` INT NOT NULL, -- Especalidade da consulta
-    `id_doctor` INT NOT NULL, -- Médico responsável pela consulta
+    `id_doctor` INT NULL, -- Médico responsável pela consulta
     `data_consulta` DATE NOT NULL, -- Data agendada da consulta
     `hora_marcada` TIME NOT NULL, -- Hora marcada para a consulta
     `origin` ENUM('Agendada', 'Emergência') NOT NULL DEFAULT 'Agendada',
-    `status` ENUM('marcada', 'em_andamento', 'finalizada', 'cancelada') NOT NULL DEFAULT 'marcada', -- Situação da consulta
+    `status` ENUM(
+        'pendente',
+        'confirmada',
+        'em_andamento',
+        'finalizada',
+        'cancelada',
+        'nao_compareceu') NOT NULL DEFAULT 'pendente', -- Situação da consulta
     `observacoes` TEXT DEFAULT '', -- Observações feitas pelo médico ou funcionário
     `lembrete_enviado` INT(11) DEFAULT NULL,
     PRIMARY KEY(`id`),
     FOREIGN KEY(`id_triagem`) REFERENCES `triagem`(`id`),
     FOREIGN KEY(`id_specialty`) REFERENCES `specialty`(`id`),
-    FOREIGN KEY(`id_doctor`) REFERENCES `doctor`(`id`)
+    FOREIGN KEY(`id_doctor`) REFERENCES `doctor`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `consulta`
@@ -401,7 +407,7 @@ INSERT INTO `consulta`
 VALUES
 (1, 1, 6, '2026-03-05', '09:00:00', 'finalizada', 'Primeira consulta'),
 (2, 4, 7, '2026-03-05', '10:00:00', 'finalizada', 'Paciente medicado'),
-(3, 1, 6, '2026-07-05', '12:00:00', 'marcada', DEFAULT);
+(3, 1, 6, '2026-07-05', '12:00:00', 'confirmada', DEFAULT);
 
 
 -- Tabela de tipos de exames para o hospital, para armazenar as informações dos diferentes tipos de exames disponíveis, incluindo a descrição. Isso facilita a gestão interna do hospital e a organização dos profissionais de saúde, além de fornecer informações claras aos pacientes sobre os exames realizados.
@@ -555,3 +561,349 @@ JOIN users u ON u.uid = m.id;
 SELECT p.full_name AS patient, CONCAT(u.name,' ',u.surname) AS doctor, c.data_consulta
 FROM consulta c
 JOIN triagem t ON t.id = c.id_triagem JOIN patient p ON p.id = t.id_patient JOIN doctor m ON m.id = c.id_doctor JOIN users u ON u.uid = m.id;
+
+
+-- ======================================================
+-- CONSULTAS PENDENTES PARA TESTE DO SISTEMA
+-- Triagem pendente + Consulta pendente sem médico
+-- ======================================================
+
+
+-- Paciente Pedro Costa (patient.id = 1, uid = 10)
+-- Especialidade Cardiologia (id = 5)
+
+INSERT INTO triagem
+(
+    id_employee,
+    id_patient,
+    id_specialty,
+    peso,
+    pressao,
+    temperatura,
+    freq_cardiaca,
+    clinical_risk,
+    queixa_principal,
+    status
+)
+VALUES
+(
+    NULL,
+    1,
+    5,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    'pendente'
+);
+
+
+
+-- Consulta pendente sem médico
+
+INSERT INTO consulta
+(
+    id_triagem,
+    id_specialty,
+    id_doctor,
+    data_consulta,
+    hora_marcada,
+    status,
+    observacoes
+)
+VALUES
+(
+    LAST_INSERT_ID(),
+    5,
+    NULL,
+    '2026-07-15',
+    '09:00:00',
+    'pendente',
+    'Aguardando associação de médico responsável'
+);
+
+
+
+------------------------------------------------------
+
+
+
+-- Paciente Sofia Rodrigues (patient.id = 2, uid = 11)
+-- Especialidade Medicina Interna (id = 17)
+
+INSERT INTO triagem
+(
+    id_employee,
+    id_patient,
+    id_specialty,
+    peso,
+    pressao,
+    temperatura,
+    freq_cardiaca,
+    clinical_risk,
+    queixa_principal,
+    status
+)
+VALUES
+(
+    NULL,
+    2,
+    17,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    'pendente'
+);
+
+
+
+INSERT INTO consulta
+(
+    id_triagem,
+    id_specialty,
+    id_doctor,
+    data_consulta,
+    hora_marcada,
+    status,
+    observacoes
+)
+VALUES
+(
+    LAST_INSERT_ID(),
+    17,
+    NULL,
+    '2026-07-16',
+    '10:30:00',
+    'pendente',
+    'Paciente aguardando triagem e definição médica'
+);
+
+
+
+------------------------------------------------------
+
+
+-- Mais duas consultas para os mesmos pacientes
+
+
+-- Pedro - Ortopedia
+INSERT INTO triagem
+(
+    id_patient,
+    id_specialty,
+    status
+)
+VALUES
+(
+    1,
+    20,
+    'pendente'
+);
+
+
+INSERT INTO consulta
+(
+    id_triagem,
+    id_specialty,
+    id_doctor,
+    data_consulta,
+    hora_marcada,
+    status,
+    observacoes
+)
+VALUES
+(
+    LAST_INSERT_ID(),
+    20,
+    NULL,
+    '2026-07-18',
+    '14:00:00',
+    'pendente',
+    'Consulta criada pelo paciente online'
+);
+
+
+
+-- Sofia - Pediatria (exemplo)
+INSERT INTO triagem
+(
+    id_patient,
+    id_specialty,
+    status
+)
+VALUES
+(
+    2,
+    21,
+    'pendente'
+);
+
+
+INSERT INTO consulta
+(
+    id_triagem,
+    id_specialty,
+    id_doctor,
+    data_consulta,
+    hora_marcada,
+    status,
+    observacoes
+)
+VALUES
+(
+    LAST_INSERT_ID(),
+    21,
+    NULL,
+    '2026-07-20',
+    '08:30:00',
+    'pendente',
+    'Consulta online aguardando confirmação'
+);
+
+
+-- ======================================================
+-- CONSULTAS CANCELADAS COM TRIAGEM CONCLUÍDA
+-- ======================================================
+
+
+-- ======================================================
+-- 1) PACIENTE SEM UID
+-- Paciente: Inês Martins (patient.id = 3)
+-- ======================================================
+
+
+INSERT INTO triagem
+(
+    id_employee,
+    id_patient,
+    id_specialty,
+    peso,
+    pressao,
+    temperatura,
+    freq_cardiaca,
+    clinical_risk,
+    queixa_principal,
+    status
+)
+VALUES
+(
+    4,
+    3,
+    17,
+    62.5,
+    '12/8',
+    36.5,
+    78,
+    'Verde(Pouco Urgente)',
+    'Dor de cabeça frequente e tonturas.',
+    'concluida'
+);
+
+
+
+INSERT INTO consulta
+(
+    id_triagem,
+    id_specialty,
+    id_doctor,
+    data_consulta,
+    hora_marcada,
+    status,
+    observacoes
+)
+VALUES
+(
+    LAST_INSERT_ID(),
+    17,
+    NULL,
+    '2026-07-12',
+    '11:00:00',
+    'cancelada',
+    'Consulta cancelada pelo paciente após realização da triagem'
+);
+
+
+
+-- ======================================================
+-- 2) PACIENTE COM UID
+-- Paciente: Miguel Ferreira
+-- uid = 12
+-- patient.id = 6
+-- ======================================================
+
+
+INSERT INTO triagem
+(
+    id_employee,
+    id_patient,
+    id_specialty,
+    peso,
+    pressao,
+    temperatura,
+    freq_cardiaca,
+    clinical_risk,
+    queixa_principal,
+    status
+)
+VALUES
+(
+    5,
+    6,
+    5,
+    80.0,
+    '13/9',
+    37.2,
+    90,
+    'Amarelo(Urgente)',
+    'Dor no peito durante esforço físico.',
+    'concluida'
+);
+
+
+
+INSERT INTO consulta
+(
+    id_triagem,
+    id_specialty,
+    id_doctor,
+    data_consulta,
+    hora_marcada,
+    status,
+    observacoes
+)
+VALUES
+(
+    LAST_INSERT_ID(),
+    5,
+    NULL,
+    '2026-07-13',
+    '15:30:00',
+    'cancelada',
+    'Consulta cancelada devido indisponibilidade do paciente'
+);
+
+SELECT 
+    c.id,
+    p.full_name AS paciente,
+    p.uid,
+    s.name AS especialidade,
+    t.status AS triagem,
+    c.status AS consulta,
+    c.data_consulta
+FROM consulta c
+
+JOIN triagem t 
+ON t.id = c.id_triagem
+
+JOIN patient p
+ON p.id = t.id_patient
+
+JOIN specialty s
+ON s.id = c.id_specialty
+
+WHERE c.status='cancelada';
